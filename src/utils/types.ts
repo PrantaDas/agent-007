@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { Document } from 'mongoose';
+import mongoose, { ObjectId } from 'mongoose';
 
 export interface Action {
     command: string;
@@ -11,13 +11,14 @@ export interface UserData {
     department: string;
     title: string;
     userName?: string | undefined;
+    userId: string;
 }
 
 export interface Token {
     id?: string
 }
 
-interface User {
+export interface User {
     name?: string;
     userName?: string | null | undefined;
     department?: string | null | undefined;
@@ -25,6 +26,8 @@ interface User {
     password?: string | null | undefined;
     role: "user" | "admin";
     __v?: string | undefined;
+    _id: mongoose.Types.ObjectId;
+    userId: string;
     createdAt?: NativeDate | undefined;
     updatedAt?: NativeDate | undefined;
 }

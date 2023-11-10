@@ -11,6 +11,12 @@ const schema = new Schema({
         trim: true,
         description: 'Name is required'
     },
+    userId: {
+        type: String,
+        required: true,
+        trim: true,
+        unique: true
+    },
     userName: {
         type: String,
         trim: true,
@@ -31,7 +37,7 @@ const schema = new Schema({
     role: {
         type: String,
         enum: ['user', 'admin'],
-        default: true
+        default: 'user'
     }
 }, { timestamps: true });
 

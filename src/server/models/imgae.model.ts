@@ -23,4 +23,4 @@ schema.methods.toJSON = function () {
 };
 
 const Image = model('Image', schema);
-module.exports = Image;
+export default Image;
