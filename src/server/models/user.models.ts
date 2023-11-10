@@ -20,7 +20,6 @@ const schema = new Schema({
     userName: {
         type: String,
         trim: true,
-        unique: true
     },
     password: {
         type: String,
