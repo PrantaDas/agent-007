@@ -1,4 +1,6 @@
 import { Schema, model } from "mongoose";
+import autopopulate from 'mongoose-autopopulate';
+import paginate from 'mongoose-autopopulate';
 
 const schema = new Schema({
     name: {
@@ -10,6 +12,9 @@ const schema = new Schema({
         ref: 'User'
     }
 }, { timestamps: true });
+
+schema.plugin(paginate);
+schema.plugin(autopopulate);
 
 schema.methods.toJSON = function () {
     const obj = this.toObject();
