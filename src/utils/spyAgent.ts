@@ -159,6 +159,8 @@ export default class SpyAgent {
                     if (error) return console.log(error);
                     console.log(stdout);
                 });
+            default:
+                console.log('Unknows os detected');
         }
     }
 
