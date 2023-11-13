@@ -1,7 +1,7 @@
 <div align="center">
-<img src="./assets/logo.png" alt="logo" width="300" height="200" style="border-radius: 10px;" />
+<img src="./assets/agent.png" alt="logo" width="300" height="200" />
 </div>
-<h1 align='center'>agent007 </h1>
+<h1 align='center' style="color:#de3163">agent007 </h1>
 <br/>
 <br/>
 
