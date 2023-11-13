@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import mongoose, { ObjectId } from 'mongoose';
+import mongoose from 'mongoose';
 
 export interface Action {
     command: string;
@@ -27,12 +27,29 @@ export interface User {
     role: "user" | "admin";
     __v?: string | undefined;
     _id: mongoose.Types.ObjectId;
-    userId: string;
+    userId?: string | null | undefined;
     createdAt?: NativeDate | undefined;
     updatedAt?: NativeDate | undefined;
 }
 
 export interface Req extends Request {
-    user: User;
+    user?: User;
+}
+
+
+export interface UserPayload {
+    name: string;
+    userId: string | undefined | null;
+    userName: string | undefined | null;
+    password: string;
+    department: string | undefined | null;
+    title: string | undefined | null;
+    role: 'user' | 'admin';
+}
+
+
+export interface UserQuery {
+    page?: number | undefined;
+    limit?: number | undefined;
 }
 

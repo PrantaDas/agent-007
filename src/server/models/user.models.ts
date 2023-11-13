@@ -13,9 +13,7 @@ const schema = new Schema({
     },
     userId: {
         type: String,
-        required: true,
         trim: true,
-        unique: true
     },
     userName: {
         type: String,
@@ -31,7 +29,6 @@ const schema = new Schema({
     },
     title: {
         type: String,
-        required: true,
     },
     role: {
         type: String,
