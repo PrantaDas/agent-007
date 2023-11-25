@@ -27,9 +27,9 @@ The bot monitor user activity in the absence of the user. The bot simply takes s
 ## [Installation](#installation)
 
 ```bash
-git clone -url
+git clone https://github.com/PrantaDas/agent-007.git
 
-cd project-driectory
+cd agent-007
 
 yarn or npm intall
 
