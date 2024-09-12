@@ -70,7 +70,7 @@ PORT= your_desired_port
 
 ## [Feedback](#feedback)
 
-If you have any feedback, please reach out to us at prantodas043@gmail.com
+If you have any feedback, please reach out to me at prantodas043@gmail.com
 
 ## [Inspired by](#inspired-by) :
 [Rakibul Yeasin](https://github.com/dreygur)
